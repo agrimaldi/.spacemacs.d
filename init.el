@@ -33,6 +33,7 @@ values."
      ess
      (git :variables
           )
+     gitlab
      markdown
      org
      osx

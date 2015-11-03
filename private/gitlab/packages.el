@@ -14,7 +14,7 @@
 ;; which require an initialization must be listed explicitly in the list.
 (setq gitlab-packages
     '(
-      ;; package names go here
+      gitlab
       ))
 
 ;; List of packages to exclude.
@@ -25,6 +25,16 @@
 ;; (defun gitlab/init-my-package ()
 ;;   "Initialize my package"
 ;;   )
+
+(defun gitlab/init-gitlab ()
+  (require 'gitlab)
+  (use-package gitlab
+    :defer t
+    :init
+    (evil-leader/set-key
+      "gap" 'gitlab-show-projects
+      "gai" 'gitlab-show-issues)))
+
 ;;
 ;; Often the body of an initialize function uses `use-package'
 ;; For more info on `use-package', see readme:
