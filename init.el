@@ -38,9 +38,9 @@ values."
      org
      osx
      pandoc
-     (perspectives :variables
-                   perspective-enable-persp-projectile t
-                   )
+     ;; (perspectives :variables
+     ;;               perspective-enable-persp-projectile t
+     ;;               )
      (python :variables
              python-test-runner 'pytest
              )
@@ -112,8 +112,8 @@ values."
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
    ;; size to make separators look not too crappy.
    dotspacemacs-default-font '("PragmataPro"
-                               :size 14
-                               :weight normal
+                               :size 13
+                               :weight semi-light
                                :width normal
                                :powerline-scale 1.3)
    ;; The leader key
