@@ -1,0 +1,3 @@
+[submodule "private/elpy"]
+	path = private/elpy
+	url = git@github.com:TheBB/elpy-layer
