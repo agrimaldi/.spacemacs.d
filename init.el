@@ -31,6 +31,7 @@ values."
      dash
      emacs-lisp
      ess
+     eyebrowse
      (git :variables
           )
      gitlab
@@ -44,6 +45,8 @@ values."
      (python :variables
              python-test-runner 'pytest
              )
+     (ranger :variables
+             ranger-show-preview t)
      (shell :variables
             shell-default-height 40
             shell-default-position 'bottom
@@ -112,8 +115,8 @@ values."
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
    ;; size to make separators look not too crappy.
    dotspacemacs-default-font '("PragmataPro"
-                               :size 13
-                               :weight semi-light
+                               :size 14
+                               :weight normal
                                :width normal
                                :powerline-scale 1.3)
    ;; The leader key
@@ -226,6 +229,22 @@ layers configuration. You are free to put any user code."
 
   ;; Disable trailing-whitespace highlighting
   (setq spacemacs-show-trailing-whitespace nil)
+
+  ;; Save Internal state of spacemacs
+  ;; (desktop-save-mode 1)
+
+  ;; Forever blinking cursor
+  (blink-cursor-mode 1)
+
+  ;; magit auto-refresh on save
+  (add-hook 'after-save-hook 'magit-after-save-refresh-status)
+
+  ;; Text selection color
+  (set-face-attribute 'hl-line nil :foreground nil :background "gray5")
+
+  ;; Python path for local testing
+  (setenv "PYTHONPATH" ".:/opt/anaconda/lib/python2.7/site-packages")
+  ;; (global-company-mode)
 )
 
 ;; Do not write anything past this comment. This is where Emacs will
