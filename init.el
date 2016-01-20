@@ -27,11 +27,11 @@ values."
                       auto-completion-enable-help-tooltip t
                       auto-completion-enable-sort-by-usage t
                       auto-completion-complete-with-key-sequence nil
+                      auto-completion-enable-snippets-in-popup t
                       )
      dash
      emacs-lisp
      ess
-     eyebrowse
      (git :variables
           )
      gitlab
@@ -227,17 +227,19 @@ layers configuration. You are free to put any user code."
   (global-linum-mode nil)
   (linum-relative-toggle)
 
+  (global-company-mode)
+
   ;; Disable trailing-whitespace highlighting
   (setq spacemacs-show-trailing-whitespace nil)
 
-  ;; Save Internal state of spacemacs
-  ;; (desktop-save-mode 1)
+  ;; inline images in orgmode
+  (setq org-startup-with-inline-images t)
 
   ;; Forever blinking cursor
   (blink-cursor-mode 1)
 
   ;; magit auto-refresh on save
-  (add-hook 'after-save-hook 'magit-after-save-refresh-status)
+  ;; (add-hook 'after-save-hook 'magit-after-save-refresh-status)
 
   ;; Text selection color
   (set-face-attribute 'hl-line nil :foreground nil :background "gray5")
@@ -245,6 +247,16 @@ layers configuration. You are free to put any user code."
   ;; Python path for local testing
   (setenv "PYTHONPATH" ".:/opt/anaconda/lib/python2.7/site-packages")
   ;; (global-company-mode)
+
+  ;; Copy hunks from both A and B when resolving merge conflicts in ediff
+  (defun ediff-copy-both-to-C ()
+    (interactive)
+    (ediff-copy-diff ediff-current-difference nil 'C nil
+                     (concat
+                      (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)
+                      (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
+  (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map "d" 'ediff-copy-both-to-C))
+  (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)
 )
 
 ;; Do not write anything past this comment. This is where Emacs will

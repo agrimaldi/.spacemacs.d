@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: slip
+# key: slip
+# group : definitions
+# --
+strip().split('$1')$0

@@ -1,0 +1,34 @@
+# -*- mode: snippet -*-
+# name: newpyfile
+# key: newpyfile
+# group : definitions
+# --
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+import sys
+import argparse
+
+$0
+
+def main(args):
+    pass
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-i', '--infile', dest='infile',
+        type=argparse.FileType('r'),
+        nargs='${1:?}',
+        default=sys.stdin,
+        help='Input file'
+    )
+    parser.add_argument(
+        '-o', '--outfile', dest='outfile',
+        type=argparse.FileType('w'),
+        nargs='?',
+        default=sys.stdout,
+        help='Output file'
+    )
+    main(parser.parse_args())
