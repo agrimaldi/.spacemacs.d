@@ -27,14 +27,12 @@ values."
                       auto-completion-enable-help-tooltip t
                       auto-completion-enable-sort-by-usage t
                       auto-completion-complete-with-key-sequence nil
-                      auto-completion-enable-snippets-in-popup t
                       )
      dash
      emacs-lisp
      ess
      (git :variables
           )
-     gitlab
      markdown
      org
      osx
@@ -228,6 +226,9 @@ layers configuration. You are free to put any user code."
   (linum-relative-toggle)
 
   (global-company-mode)
+
+  ;; Snippet completion on <tab>
+  (global-set-key (kbd "TAB") 'hippie-expand)
 
   ;; Disable trailing-whitespace highlighting
   (setq spacemacs-show-trailing-whitespace nil)

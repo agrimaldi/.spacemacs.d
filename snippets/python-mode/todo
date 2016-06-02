@@ -2,4 +2,4 @@
 # name: todo
 # key: todo
 # --
-`(yas-with-comment "TODO: ${1:desc} -- `echo $USER` [ `!v strftime("%c")` ]"`
+`(yas-with-comment "TODO:")` ${1:desc} -- `echo $USER` [ `!v strftime("%c")` ]
