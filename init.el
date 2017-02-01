@@ -18,6 +18,7 @@ values."
    ;; of a list then all discovered layers will be installed.
    dotspacemacs-configuration-layers
    '(
+     shell-scripts
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press <SPC f e R> (Vim style) or
@@ -31,6 +32,7 @@ values."
      dash
      emacs-lisp
      ess
+     extra-langs
      (git :variables
           )
      markdown
@@ -218,16 +220,16 @@ values."
   "Initialization function for user code.
 It is called immediately after `dotspacemacs/init'.  You are free to put any
 user code."
+
+  ;; Keep server alive
+  (setq-default dotspacemacs-persistent-server t)
+
   )
 
 (defun dotspacemacs/user-config ()
   "Configuration function for user code.
  This function is called at the very end of Spacemacs initialization after
 layers configuration. You are free to put any user code."
-
-  ;; Start daemon
-  ;; (unless (server-running-p)
-  ;;         (server-start))
 
   ;; (require 'multiple-cursors)
   (global-evil-mc-mode 1)
@@ -273,3 +275,18 @@ layers configuration. You are free to put any user code."
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (wolfram-mode thrift stan-mode scad-mode qml-mode matlab-mode arduino-mode insert-shebang fish-mode company-shell org yapfify uuidgen py-isort osx-dictionary org-projectile org-download live-py-mode link-hint hide-comnt git-link flyspell-correct-helm flyspell-correct eyebrowse evil-visual-mark-mode evil-unimpaired evil-ediff eshell-z dumb-jump column-enforce-mode spinner parent-mode request gitignore-mode fringe-helper git-gutter+ epl flx highlight ctable pos-tip pythonic s popup bind-map xterm-color window-numbering spacemacs-theme spaceline ranger persp-mode pandoc-mode orgit org-pomodoro alert org-plus-contrib neotree markdown-toc markdown-mode magit-gitflow leuven-theme hl-todo helm-projectile helm-make projectile helm-descbinds helm-dash helm-c-yasnippet helm-ag google-translate git-messenger expand-region exec-path-from-shell evil-mc evil-matchit evil-magit magit magit-popup evil-exchange eshell-prompt-extras diff-hl company-quickhelp company-anaconda auto-yasnippet yasnippet auto-compile anaconda-mode ace-link auto-complete avy ess julia-mode anzu iedit smartparens flycheck git-gutter git-commit with-editor company helm helm-core ht hydra f dash quelpa package-build use-package which-key evil yaml-mode ws-butler volatile-highlights vi-tilde-fringe undo-tree toc-org smooth-scrolling smeargle shell-pop reveal-in-osx-finder restart-emacs rainbow-delimiters pyvenv pytest pyenv-mode py-yapf powerline popwin pkg-info pip-requirements pcre2el pbcopy paradox page-break-lines packed ox-pandoc osx-trash org-repo-todo org-present org-bullets open-junk-file multi-term move-text mmm-mode macrostep lorem-ipsum log4e linum-relative launchctl info+ indent-guide ido-vertical-mode hy-mode hungry-delete htmlize highlight-parentheses highlight-numbers highlight-indentation help-fns+ helm-themes helm-swoop helm-pydoc helm-mode-manager helm-gitignore helm-flyspell helm-flx helm-company gruvbox-theme goto-chg golden-ratio gnuplot gntp gitconfig-mode gitattributes-mode git-timemachine git-gutter-fringe git-gutter-fringe+ gh-md flycheck-pos-tip flx-ido fill-column-indicator fancy-battery evil-visualstar evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-lisp-state evil-indent-plus evil-iedit-state evil-escape evil-args evil-anzu eval-sexp-fu ess-smart-equals ess-R-object-popup ess-R-data-view esh-help elisp-slime-nav diminish define-word dash-at-point cython-mode company-statistics clean-aindent-mode buffer-move bracketed-paste bind-key auto-highlight-symbol auto-dictionary async aggressive-indent adaptive-wrap ace-window ace-jump-helm-line ac-ispell))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
+ '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
