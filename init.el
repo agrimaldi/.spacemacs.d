@@ -258,6 +258,15 @@ layers configuration. You are free to put any user code."
   ;; Text selection color
   (set-face-attribute 'hl-line nil :foreground nil :background "gray5")
 
+  ;; Org-mode code execution
+  (with-eval-after-load 'org
+    (require 'ob-python)
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((shell . t)
+       (python . t)))
+    )
+
   ;; Python path for local testing
   (setenv "PYTHONPATH" ".:/opt/anaconda/lib/python2.7/site-packages")
   ;; (global-company-mode)
