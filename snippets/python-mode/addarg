@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+#name : addarg
+#key : addarg
+#contributor : Alexis GRIMALDI
+# --
+    parser.add_argument(
+        "-$1", "--$2", dest="$3",
+        type=$4,
+        nargs=$4,
+        default=$5,
+        help="$6"
+    )
