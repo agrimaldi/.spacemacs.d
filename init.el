@@ -224,6 +224,8 @@ user code."
   ;; Keep server alive
   (setq-default dotspacemacs-persistent-server t)
 
+  (setq initial-frame-alist '((top . 0) (left . 850) (width . 150) (height . 81)))
+
   )
 
 (defun dotspacemacs/user-config ()
@@ -266,6 +268,9 @@ layers configuration. You are free to put any user code."
      '((shell . t)
        (python . t)))
     )
+
+  ;; Org-mode code indentation
+  (setq org-src-tab-acts-natively t)
 
   ;; Python path for local testing
   (setenv "PYTHONPATH" ".:/opt/anaconda/lib/python2.7/site-packages")
