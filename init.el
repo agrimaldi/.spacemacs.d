@@ -35,8 +35,11 @@ values."
      extra-langs
      (git :variables
           )
+     ipython-notebook
      markdown
-     org
+     (org :variables
+          org-enable-github-support t
+          )
      osx
      pandoc
      ;; (perspectives :variables
@@ -51,8 +54,11 @@ values."
             shell-default-height 40
             shell-default-position 'bottom
             )
-     spell-checking
+     (spell-checking :variables
+                     enable-flyspell-auto-completion t
+                     )
      syntax-checking
+     themes-megapack
      version-control
      yaml
      )
@@ -62,7 +68,10 @@ values."
    ;; configuration in `dotspacemacs/config'.
    dotspacemacs-additional-packages
    '(
+     autothemer
      ;; multiple-cursors
+     sublimity
+     ;; minimap
      )
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
@@ -102,15 +111,8 @@ values."
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
    dotspacemacs-themes '(
-                         gruvbox
-                         darktooth
-                         birds-of-paradise-plus
-                         firebelly
-                         jazz
-                         niflheim
-                         sanityinc-tomorrow-night
-                         ujelly
-                         wilson
+                         ;; gruvbox
+                         ;; darktooth
                          spacemacs-dark
                          )
    ;; If non nil the cursor color matches the state color.
@@ -118,7 +120,7 @@ values."
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
    ;; size to make separators look not too crappy.
    dotspacemacs-default-font '("PragmataPro"
-                               :size 14
+                               :size 15
                                :weight normal
                                :width normal
                                :powerline-scale 1.3)
@@ -224,7 +226,9 @@ user code."
   ;; Keep server alive
   (setq-default dotspacemacs-persistent-server t)
 
-  (setq initial-frame-alist '((top . 0) (left . 850) (width . 150) (height . 81)))
+  ;; (setq initial-frame-alist '((top . 0) (left . 822) (width . 135) (height . 60)))
+
+  (load-file "~/.spacemacs.d/private/local/autothemer.el")
 
   )
 
@@ -232,6 +236,16 @@ user code."
   "Configuration function for user code.
  This function is called at the very end of Spacemacs initialization after
 layers configuration. You are free to put any user code."
+
+  (load-theme 'darktooth t)
+
+  ;; Sublimity
+  (require 'sublimity)
+  ;; (require 'sublimity-scroll)
+  (require 'sublimity-map)
+  (sublimity-map-set-delay 0.3)
+  ;; (require 'sublimity-attractive)
+  ;; (setq minimap-window-location 'right)
 
   ;; (require 'multiple-cursors)
   (global-evil-mc-mode 1)
@@ -260,17 +274,150 @@ layers configuration. You are free to put any user code."
   ;; Text selection color
   (set-face-attribute 'hl-line nil :foreground nil :background "gray5")
 
+  ;; Current line background color
+  (set-face-background 'hl-line "#3e4446")
+
   ;; Org-mode code execution
   (with-eval-after-load 'org
+    (setq org-startup-indented t)
+    (setq org-clock-idle-time 15)
+
+    ;; todos
+    (setq org-todo-keywords
+          (quote ((sequence "TODO(t)" "NEXT(n)" "STARTED(s)" "|" "DONE(d)")
+                  (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)"))))
+    (setq org-todo-keyword-faces
+          '(("TODO" . (:foreground "red" :weight bold))
+            ("NEXT" . (:foreground "orange" :weight bold))
+            ("STARTED" . (:foreground "yellow" :weight bold))
+            ("WAITING" . (:foreground "lightblue" :weight bold))
+            ("HOLD" . (:foreground "lightblue" :weight bold))
+            ("CANCELLED" . (:foreground "grey" :weight bold))
+            ))
+    (setq org-src-fontify-natively t)
+    (setq org-src-tab-acts-natively t)
     (require 'ob-python)
+    (require 'ob-sh)
+    (require 'ob-shell)
     (org-babel-do-load-languages
      'org-babel-load-languages
      '((shell . t)
-       (python . t)))
+       (python . t)
+       (sh         . t)
+       (js         . t)
+       (emacs-lisp . t)
+       (clojure    . t)
+       (dot        . t)
+       ))
+
+
     )
 
-  ;; Org-mode code indentation
-  (setq org-src-tab-acts-natively t)
+
+  (defun org-babel-async-execute:sh ()
+    "Execute the python src-block at point asynchronously.
+      :var headers are supported.
+      :results output is all that is supported for output.
+
+      A new window will pop up showing you the output as it appears,
+      and the output in that window will be put in the RESULTS section
+      of the code block."
+    (interactive)
+    (let* ((current-file (buffer-file-name))
+           (uuid (org-id-get-create))
+           (code (org-element-property :value (org-element-context)))
+           (temporary-file-directory ".")
+           (tempfile (make-temp-file "py-"))
+           (pbuffer (format "*%s*" uuid))
+           (varcmds (org-babel-variable-assignments:sh
+                     (nth 2 (org-babel-get-src-block-info))))
+           process)
+
+      ;; get rid of old results, and put a place-holder for the new results to
+      ;; come.
+      (org-babel-remove-result)
+
+      (save-excursion
+        (re-search-forward "#\\+END_SRC")
+        (insert (format
+                 "\n\n#+RESULTS: %s\n: %s"
+                 (or (org-element-property :name (org-element-context))
+                     "")
+                 uuid)))
+
+      ;; open the results buffer to see the results in.
+      (switch-to-buffer-other-window pbuffer)
+
+      ;; Create temp file containing the code.
+      (with-temp-file tempfile
+        ;; if there are :var headers insert them.
+        (dolist (cmd varcmds)
+          (insert cmd)
+          (insert "\n"))
+        (insert code))
+
+      ;; run the code
+      (setq process (start-process
+                     uuid
+                     pbuffer
+                     "zsh"
+                     tempfile))
+
+      ;; when the process is done, run this code to put the results in the
+      ;; org-mode buffer.
+      (set-process-sentinel
+       process
+       `(lambda (process event)
+          (save-window-excursion
+            (save-excursion
+              (save-restriction
+                (with-current-buffer (find-file-noselect ,current-file)
+                  (goto-char (point-min))
+                  (re-search-forward ,uuid)
+                  (beginning-of-line)
+                  (kill-line)
+                  (insert
+                   (mapconcat
+                    (lambda (x)
+                      (format "| %s |" x))
+                    (butlast (split-string
+                              (with-current-buffer
+                                  ,pbuffer
+                                (buffer-string))
+                              "\n"))
+                    "\n"))))))
+          ;; delete the results buffer then delete the tempfile.
+          ;; finally, delete the process.
+          (when (get-buffer ,pbuffer)
+            (kill-buffer ,pbuffer)
+            (delete-window))
+          (delete-file ,tempfile)
+          (delete-process process)))))
+
+
+  (defun org-babel-execute:sh (body params)
+    "Execute a block of Shell commands with Babel.
+    This function is called by `org-babel-execute-src-block'."
+    (let* ((session (org-babel-sh-initiate-session
+                     (cdr (assoc :session params))))
+           (async (assoc :async params))
+           (stdin (let ((stdin (cdr (assoc :stdin params))))
+                    (when stdin (org-babel-sh-var-to-string
+                                 (org-babel-ref-resolve stdin)))))
+           (full-body (org-babel-expand-body:generic
+                       body params (org-babel-variable-assignments:sh params))))
+      (if async
+          ;; run asynchronously
+          (org-babel-async-execute:sh)
+        ;; else run regularly
+        (org-babel-reassemble-table
+         (org-babel-sh-evaluate session full-body params stdin)
+         (org-babel-pick-name
+          (cdr (assoc :colname-names params)) (cdr (assoc :colnames params)))
+         (org-babel-pick-name
+          (cdr (assoc :rowname-names params)) (cdr (assoc :rownames
+                                                          params)))))))
+
 
   ;; Python path for local testing
   (setenv "PYTHONPATH" ".:/opt/anaconda/lib/python2.7/site-packages")
@@ -285,6 +432,7 @@ layers configuration. You are free to put any user code."
                       (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
   (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map "d" 'ediff-copy-both-to-C))
   (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)
+
 )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -294,13 +442,16 @@ layers configuration. You are free to put any user code."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(evil-want-Y-yank-to-eol t)
+ '(org-agenda-files
+   (quote
+    ("~/mpi/Kc167_2016-01-26_dCTCF-20HE_NextSeq/README.org")))
  '(package-selected-packages
    (quote
-    (wolfram-mode thrift stan-mode scad-mode qml-mode matlab-mode arduino-mode insert-shebang fish-mode company-shell org yapfify uuidgen py-isort osx-dictionary org-projectile org-download live-py-mode link-hint hide-comnt git-link flyspell-correct-helm flyspell-correct eyebrowse evil-visual-mark-mode evil-unimpaired evil-ediff eshell-z dumb-jump column-enforce-mode spinner parent-mode request gitignore-mode fringe-helper git-gutter+ epl flx highlight ctable pos-tip pythonic s popup bind-map xterm-color window-numbering spacemacs-theme spaceline ranger persp-mode pandoc-mode orgit org-pomodoro alert org-plus-contrib neotree markdown-toc markdown-mode magit-gitflow leuven-theme hl-todo helm-projectile helm-make projectile helm-descbinds helm-dash helm-c-yasnippet helm-ag google-translate git-messenger expand-region exec-path-from-shell evil-mc evil-matchit evil-magit magit magit-popup evil-exchange eshell-prompt-extras diff-hl company-quickhelp company-anaconda auto-yasnippet yasnippet auto-compile anaconda-mode ace-link auto-complete avy ess julia-mode anzu iedit smartparens flycheck git-gutter git-commit with-editor company helm helm-core ht hydra f dash quelpa package-build use-package which-key evil yaml-mode ws-butler volatile-highlights vi-tilde-fringe undo-tree toc-org smooth-scrolling smeargle shell-pop reveal-in-osx-finder restart-emacs rainbow-delimiters pyvenv pytest pyenv-mode py-yapf powerline popwin pkg-info pip-requirements pcre2el pbcopy paradox page-break-lines packed ox-pandoc osx-trash org-repo-todo org-present org-bullets open-junk-file multi-term move-text mmm-mode macrostep lorem-ipsum log4e linum-relative launchctl info+ indent-guide ido-vertical-mode hy-mode hungry-delete htmlize highlight-parentheses highlight-numbers highlight-indentation help-fns+ helm-themes helm-swoop helm-pydoc helm-mode-manager helm-gitignore helm-flyspell helm-flx helm-company gruvbox-theme goto-chg golden-ratio gnuplot gntp gitconfig-mode gitattributes-mode git-timemachine git-gutter-fringe git-gutter-fringe+ gh-md flycheck-pos-tip flx-ido fill-column-indicator fancy-battery evil-visualstar evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-lisp-state evil-indent-plus evil-iedit-state evil-escape evil-args evil-anzu eval-sexp-fu ess-smart-equals ess-R-object-popup ess-R-data-view esh-help elisp-slime-nav diminish define-word dash-at-point cython-mode company-statistics clean-aindent-mode buffer-move bracketed-paste bind-key auto-highlight-symbol auto-dictionary async aggressive-indent adaptive-wrap ace-window ace-jump-helm-line ac-ispell))))
+    (ox-gfm zonokai-theme zenburn-theme zen-and-art-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme pastels-on-dark-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme niflheim-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme firebelly-theme farmhouse-theme espresso-theme dracula-theme django-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme fish-mode ein websocket flyspell-popup minimap sublimity wolfram-mode thrift stan-mode scad-mode qml-mode matlab-mode arduino-mode insert-shebang company-shell org yapfify uuidgen py-isort osx-dictionary org-projectile org-download live-py-mode link-hint hide-comnt git-link flyspell-correct-helm flyspell-correct eyebrowse evil-visual-mark-mode evil-unimpaired evil-ediff eshell-z dumb-jump column-enforce-mode spinner parent-mode request gitignore-mode fringe-helper git-gutter+ epl flx highlight ctable pos-tip pythonic s popup bind-map xterm-color window-numbering spacemacs-theme spaceline ranger persp-mode pandoc-mode orgit org-pomodoro alert org-plus-contrib neotree markdown-toc markdown-mode magit-gitflow leuven-theme hl-todo helm-projectile helm-make projectile helm-descbinds helm-dash helm-c-yasnippet helm-ag google-translate git-messenger expand-region exec-path-from-shell evil-mc evil-matchit evil-magit magit magit-popup evil-exchange eshell-prompt-extras diff-hl company-quickhelp company-anaconda auto-yasnippet yasnippet auto-compile anaconda-mode ace-link auto-complete avy ess julia-mode anzu iedit smartparens flycheck git-gutter git-commit with-editor company helm helm-core ht hydra f dash quelpa package-build use-package which-key evil yaml-mode ws-butler volatile-highlights vi-tilde-fringe undo-tree toc-org smooth-scrolling smeargle shell-pop reveal-in-osx-finder restart-emacs rainbow-delimiters pyvenv pytest pyenv-mode py-yapf powerline popwin pkg-info pip-requirements pcre2el pbcopy paradox page-break-lines packed ox-pandoc osx-trash org-repo-todo org-present org-bullets open-junk-file multi-term move-text mmm-mode macrostep lorem-ipsum log4e linum-relative launchctl info+ indent-guide ido-vertical-mode hy-mode hungry-delete htmlize highlight-parentheses highlight-numbers highlight-indentation help-fns+ helm-themes helm-swoop helm-pydoc helm-mode-manager helm-gitignore helm-flyspell helm-flx helm-company gruvbox-theme goto-chg golden-ratio gnuplot gntp gitconfig-mode gitattributes-mode git-timemachine git-gutter-fringe git-gutter-fringe+ gh-md flycheck-pos-tip flx-ido fill-column-indicator fancy-battery evil-visualstar evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-lisp-state evil-indent-plus evil-iedit-state evil-escape evil-args evil-anzu eval-sexp-fu ess-smart-equals ess-R-object-popup ess-R-data-view esh-help elisp-slime-nav diminish define-word dash-at-point cython-mode company-statistics clean-aindent-mode buffer-move bracketed-paste bind-key auto-highlight-symbol auto-dictionary async aggressive-indent adaptive-wrap ace-window ace-jump-helm-line ac-ispell))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
- '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
+ )
